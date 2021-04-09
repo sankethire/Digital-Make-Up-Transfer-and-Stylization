@@ -5,8 +5,10 @@ from imutils import face_utils
 import matplotlib.pyplot as plt
 from matplotlib.widgets import RectangleSelector
 
+from . import skin_detector
+
 hair_luminosity_thresh = 20
-forehead_search_headstart = 10
+forehead_search_headstart = 20
 
 detector = dlib.get_frontal_face_detector()
 predictor = dlib.shape_predictor('src/shape_predictor_68_face_landmarks.dat')
@@ -48,47 +50,47 @@ def select_regions(luminosity_image, message):
 
 	return [round(coord) for coord in toggle_selector.RS.extents] # [xmin, xmax, ymin, ymax]
 
-def auto_adjust_forehead_landmarks(landmarks, luminosity_image, forehead_region, hair_region):
+def auto_adjust_forehead_landmarks(landmarks, luminosity_image, forehead_region, hair_region, skin_mask):
 	global classes_landmark, hair_luminosity_thresh, forehead_search_headstart
 	forehead_range = classes_landmark["forehead"]
 
-	f_x_min, f_x_max, f_y_min, f_y_max = forehead_region
-	h_x_min, h_x_max, h_y_min, h_y_max = hair_region
-	forehead_image = luminosity_image[f_x_min:f_x_max, f_y_min:f_y_max]
-	hair_image = luminosity_image[h_x_min:h_x_max, h_y_min:h_y_max]
-	f_mean = np.mean(forehead_image)
-	h_mean = np.mean(hair_image)
-	f_std = np.std(forehead_image)
-	h_std = np.std(hair_image)
-	range_factor = 1.5
-	f_h_ratio = f_std/h_std
+	# f_x_min, f_x_max, f_y_min, f_y_max = forehead_region
+	# h_x_min, h_x_max, h_y_min, h_y_max = hair_region
+	# forehead_image = luminosity_image[f_x_min:f_x_max, f_y_min:f_y_max]
+	# hair_image = luminosity_image[h_x_min:h_x_max, h_y_min:h_y_max]
+	# f_mean = np.mean(forehead_image)
+	# h_mean = np.mean(hair_image)
+	# f_std = np.std(forehead_image)
+	# h_std = np.std(hair_image)
+	# range_factor = 1.5
+	# f_h_ratio = f_std/h_std
 
-	def classify_f_h(luminosity_val):
-		# binary to decimal of two flags indicating whether luminosity lies in range of each class
-		class_output = 0
-		f_dist = np.abs(luminosity_val - f_mean)
-		h_dist = np.abs(luminosity_val - h_mean)
+	# def classify_f_h(luminosity_val):
+	# 	# binary to decimal of two flags indicating whether luminosity lies in range of each class
+	# 	class_output = 0
+	# 	f_dist = np.abs(luminosity_val - f_mean)
+	# 	h_dist = np.abs(luminosity_val - h_mean)
 
-		if f_dist <= range_factor * f_std:
-			class_output = 1
-		if h_dist <= range_factor * h_std:
-			if class_output == 0:
-				class_output = 2
-			else:
-				class_output = 3
+	# 	if f_dist <= range_factor * f_std:
+	# 		class_output = 1
+	# 	if h_dist <= range_factor * h_std:
+	# 		if class_output == 0:
+	# 			class_output = 2
+	# 		else:
+	# 			class_output = 3
 
-		if class_output == 0:
-			return "f"
-		elif class_output == 1:
-			return "f"
-		elif class_output == 2:
-			return "h"
-		# Tie breaker
-		elif class_output == 3:
-			dist_ratio = f_dist / h_dist
-			if dist_ratio > f_h_ratio:
-				return "h"
-			return "f"
+	# 	if class_output == 0:
+	# 		return "f"
+	# 	elif class_output == 1:
+	# 		return "f"
+	# 	elif class_output == 2:
+	# 		return "h"
+	# 	# Tie breaker
+	# 	elif class_output == 3:
+	# 		dist_ratio = f_dist / h_dist
+	# 		if dist_ratio > f_h_ratio:
+	# 			return "h"
+	# 		return "f"
 		
 
 	for i in range(forehead_range[0], forehead_range[1]+1):
@@ -96,12 +98,13 @@ def auto_adjust_forehead_landmarks(landmarks, luminosity_image, forehead_region,
 		y -= forehead_search_headstart
 		
 		while y > 0:
-			l1 = int(luminosity_image[x, y])
-			l2 = int(luminosity_image[x, y-1])
-			c1 = classify_f_h(l1)
-			c2 = classify_f_h(l2)
+			# l1 = int(luminosity_image[x, y])
+			# l2 = int(luminosity_image[x, y-1])
+			# c1 = classify_f_h(l1)
+			# c2 = classify_f_h(l2)
 			# if l2 - l1 >= hair_luminosity_thresh and c1 != c2:
-			if c1 == "f" and c2 == "h":
+			# if c1 == "f" and c2 == "h":
+			if skin_mask[y, x] == 0:
 				break
 			y -= 1
 		
@@ -191,9 +194,13 @@ def face_points(image):
 
 	landmarks = np.concatenate([landmarks, part_way_points(rightmost_right_eyebrow_point, rightmost_jaw_point, 2), landmarks[r_eb_range[0]:r_eb_range[1]+1], part_way_points(leftmost_right_eyebrow_point, rightmost_left_eyebrow_point, 1), landmarks[l_eb_range[0]:l_eb_range[1]+1], part_way_points(leftmost_jaw_point, leftmost_left_eyebrow_point, 2)])
 	
-	forehead_region = select_regions(gray_image, "Select a rectangle only containing forehead.")
-	hair_region = select_regions(gray_image, "Select a rectangle only containing hair.")
-	auto_adjust_forehead_landmarks(landmarks, gray_image, forehead_region, hair_region)
+	forehead_region, hair_region = None, None
+	# forehead_region = select_regions(gray_image, "Select a rectangle only containing forehead.")
+	# hair_region = select_regions(gray_image, "Select a rectangle only containing hair.")
+	skin_mask = skin_detector.process(image)
+	# cv.imshow("skin_mask", skin_mask)
+	# cv.waitKey(0)
+	auto_adjust_forehead_landmarks(landmarks, gray_image, forehead_region, hair_region, skin_mask)
 	interactive_forehead_selector(gray_image, landmarks).process()
 
 	return landmarks
