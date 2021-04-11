@@ -10,6 +10,16 @@ class digital_makeup:
 		self.subject_image = cv.imread(subject_image_path)
 		self.example_image = cv.imread(example_image_path)
 
+		# pyrUp pyrDown fix, requires shape of image
+		x, y, _ = self.subject_image.shape
+		x = (x//2)*2
+		y = (y//2)*2
+		self.subject_image = self.subject_image[:x,:y,:]
+		x, y, _ = self.example_image.shape
+		x = (x//2)*2
+		y = (y//2)*2
+		self.example_image = self.example_image[:x,:y,:]
+
 		# Properties of dm that will be set by other functions\
 		# Face landmark points for subject image - 2d array - inner dimension is coord of point
 		# self.subject_face_landmarks = None

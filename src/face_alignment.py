@@ -210,18 +210,18 @@ def extract_face_triangles(dm):
 	dm.subject_face_landmarks = face_points(dm.subject_image)
 	dm.example_face_landmarks = face_points(dm.example_image)
 
-	dm.subject_face_hull = cv.convexHull(dm.subject_face_landmarks)
-	dm.example_face_hull = cv.convexHull(dm.example_face_landmarks)
+	subject_face_hull = cv.convexHull(dm.subject_face_landmarks)
+	example_face_hull = cv.convexHull(dm.example_face_landmarks)
 
-	dm.subject_face_bounding_box = cv.boundingRect(dm.subject_face_hull)
-	dm.example_face_bounding_box = cv.boundingRect(dm.example_face_hull)
+	subject_face_bounding_box = cv.boundingRect(subject_face_hull)
+	example_face_bounding_box = cv.boundingRect(example_face_hull)
 
-	subject_subdiv = cv.Subdiv2D(dm.subject_face_bounding_box)
+	subject_subdiv = cv.Subdiv2D(subject_face_bounding_box)
 	for p_x, p_y in dm.subject_face_landmarks:
 		subject_subdiv.insert((p_x, p_y))
 	dm.subject_triangles = subject_subdiv.getTriangleList()
 
-	example_subdiv = cv.Subdiv2D(dm.example_face_bounding_box)
+	example_subdiv = cv.Subdiv2D(example_face_bounding_box)
 	for p_x, p_y in dm.example_face_landmarks:
 		example_subdiv.insert((p_x, p_y))
 	dm.example_triangles = example_subdiv.getTriangleList() #
@@ -342,12 +342,12 @@ def make_masks(dm):
 	dm.lip_mask = dm.outer_mouth_mask - dm.inner_mouth_mask
 	dm.skin_mask = dm.entire_face_mask - dm.eyes_mask - dm.outer_mouth_mask
 
-	plt.subplot(2, 2, 1)
-	plt.imshow(dm.lip_mask, cmap='gray', vmin=0, vmax=255)
-	plt.subplot(2, 2, 2)
-	plt.imshow(dm.eyes_mask, cmap='gray', vmin=0, vmax=255)
-	plt.subplot(2, 2, 3)
-	plt.imshow(dm.skin_mask, cmap='gray', vmin=0, vmax=255)
-	plt.subplot(2, 2, 4)
-	plt.imshow(dm.nose_outline_mask, cmap='gray', vmin=0, vmax=255)
-	plt.show()
+	# plt.subplot(2, 2, 1)
+	# plt.imshow(dm.lip_mask, cmap='gray', vmin=0, vmax=255)
+	# plt.subplot(2, 2, 2)
+	# plt.imshow(dm.eyes_mask, cmap='gray', vmin=0, vmax=255)
+	# plt.subplot(2, 2, 3)
+	# plt.imshow(dm.skin_mask, cmap='gray', vmin=0, vmax=255)
+	# plt.subplot(2, 2, 4)
+	# plt.imshow(dm.nose_outline_mask, cmap='gray', vmin=0, vmax=255)
+	# plt.show()
