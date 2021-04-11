@@ -78,7 +78,7 @@ def lip_makeup(dm):
         argmax_q_tilda = -np.inf
         for i in range(iterations):
             q = random_sample[i]
-            current_q_tilda = Gaussian(((p[0]-q[0])**2+(p[1]-q[1])**2)/2) * Gaussian((np.fabs(lip_luminance_remapping_example[q[0],q[1]] - lip_luminance_subject[p[0],p[1]])/255)**2)
+            current_q_tilda = Gaussian(((p[0]-q[0])**2+(p[1]-q[1])**2)/2) * Gaussian((np.fabs(lip_luminance_remapping_example[q[0],q[1]] - lip_luminance_subject[p[0],p[1]])/255.0)**2)
             if argmax_q_tilda < current_q_tilda:
                 argmax_q_tilda = current_q_tilda
                 q_tilda = q
