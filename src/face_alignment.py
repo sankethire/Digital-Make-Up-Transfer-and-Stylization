@@ -315,3 +315,4 @@ def make_masks(dm):
 	dm.inner_mouth_mask = np.zeros((dm.subject.shape[0], dm.subject.shape[1]))
 	dm.outer_mouth_mask = np.zeros((dm.subject.shape[0], dm.subject.shape[1]))
 
+	# entire_face_points = [for dm.]
