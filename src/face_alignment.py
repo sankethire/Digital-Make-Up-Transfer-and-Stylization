@@ -15,7 +15,7 @@ forehead_search_headstart = 20
 detector = dlib.get_frontal_face_detector()
 predictor = dlib.shape_predictor('src/shape_predictor_68_face_landmarks.dat')
 
-classes_landmark = {"jaw": (0,16), "right eyebrow": (17, 21), "left eyebrow": (22, 26), "nose": (27, 35), "right eye": (36, 41), "left eye": (42, 47), "lip": (48, 59), "mouth": (60, 67), "forehead": (68, 82)}
+classes_landmark = {"jaw": (0,16), "right eyebrow": (17, 21), "left eyebrow": (22, 26), "nose": (27, 35), "right eye": (36, 41), "left eye": (42, 47), "outer mouth": (48, 59), "inner mouth": (60, 67), "forehead": (68, 82)}
 
 def part_way_points(start, end, n):
 	points = []
@@ -304,14 +304,51 @@ def warp_example(dm):
 
 def make_masks(dm):
 	# C2
-	dm.lip_mask = np.zeros((dm.subject.shape[0], dm.subject.shape[1]))
+	dm.lip_mask = np.zeros((dm.subject_image.shape[0], dm.subject_image.shape[1]), np.uint8)
 	# C3
-	dm.eyes_mask = np.zeros((dm.subject.shape[0], dm.subject.shape[1]))
+	dm.eyes_mask = np.zeros((dm.subject_image.shape[0], dm.subject_image.shape[1]), np.uint8)
 	# C1
-	dm.skin_mask = np.zeros((dm.subject.shape[0], dm.subject.shape[1]))
+	dm.skin_mask = np.zeros((dm.subject_image.shape[0], dm.subject_image.shape[1]), np.uint8)
 	# Other used for compositions
-	dm.nose_outline_mask = np.zeros((dm.subject.shape[0], dm.subject.shape[1]))
-	dm.entire_face_mask = np.zeros((dm.subject.shape[0], dm.subject.shape[1]))
-	dm.inner_mouth_mask = np.zeros((dm.subject.shape[0], dm.subject.shape[1]))
-	dm.outer_mouth_mask = np.zeros((dm.subject.shape[0], dm.subject.shape[1]))
+	dm.nose_outline_mask = np.zeros((dm.subject_image.shape[0], dm.subject_image.shape[1]), np.uint8)
+	dm.entire_face_mask = np.zeros((dm.subject_image.shape[0], dm.subject_image.shape[1]), np.uint8)
+	dm.inner_mouth_mask = np.zeros((dm.subject_image.shape[0], dm.subject_image.shape[1]), np.uint8)
+	dm.outer_mouth_mask = np.zeros((dm.subject_image.shape[0], dm.subject_image.shape[1]), np.uint8)
 
+	jaw_points = [landmark for index, landmark in enumerate(dm.subject_face_landmarks) if classify_landmark(index) == "jaw"]
+	forehead_points = [landmark for index, landmark in enumerate(dm.subject_face_landmarks) if classify_landmark(index) == "forehead"]
+	forehead_points.reverse()
+	entire_face_points = np.array([jaw_points + forehead_points])
+
+	cv.fillPoly(dm.entire_face_mask, entire_face_points, 255)
+
+	right_eye_points = [landmark for index, landmark in enumerate(dm.subject_face_landmarks) if classify_landmark(index) == "right eye"]
+	left_eye_points = [landmark for index, landmark in enumerate(dm.subject_face_landmarks) if classify_landmark(index) == "left eye"]
+	eyes_points = np.array([right_eye_points, left_eye_points])
+
+	cv.fillPoly(dm.eyes_mask, eyes_points, 255)
+
+	outer_mouth_points = np.array([[landmark for index, landmark in enumerate(dm.subject_face_landmarks) if classify_landmark(index) == "outer mouth"]])
+
+	cv.fillPoly(dm.outer_mouth_mask, outer_mouth_points, 255)
+
+	inner_mouth_points = np.array([[landmark for index, landmark in enumerate(dm.subject_face_landmarks) if classify_landmark(index) == "inner mouth"]])
+
+	cv.fillPoly(dm.inner_mouth_mask, inner_mouth_points, 255)
+
+	nose_outline_points = np.array([[landmark for index, landmark in enumerate(dm.subject_face_landmarks) if 31 <= index <= 35 or index == 27]])
+
+	cv.polylines(dm.nose_outline_mask, nose_outline_points, True, 255, 5)
+
+	dm.lip_mask = dm.outer_mouth_mask - dm.inner_mouth_mask
+	dm.skin_mask = dm.entire_face_mask - dm.eyes_mask - dm.outer_mouth_mask
+
+	plt.subplot(2, 2, 1)
+	plt.imshow(dm.lip_mask, cmap='gray', vmin=0, vmax=255)
+	plt.subplot(2, 2, 2)
+	plt.imshow(dm.eyes_mask, cmap='gray', vmin=0, vmax=255)
+	plt.subplot(2, 2, 3)
+	plt.imshow(dm.skin_mask, cmap='gray', vmin=0, vmax=255)
+	plt.subplot(2, 2, 4)
+	plt.imshow(dm.nose_outline_mask, cmap='gray', vmin=0, vmax=255)
+	plt.show()

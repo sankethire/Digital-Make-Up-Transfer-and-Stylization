@@ -8,9 +8,14 @@ class digital_makeup:
 		self.subject_image = cv.imread(subject_image_path)
 		self.example_image = cv.imread(example_image_path)
 
+		# Properties of dm that will be set by other functions\
+		# Face landmark points for subject image - 2d array - inner dimension is coord of point
+		# self.subject_face_landmarks = None
+
 	def process(self):
 		face_alignment.extract_face_triangles(self)
 		face_alignment.warp_example(self)
+		face_alignment.make_masks(self)
 
 if __name__ == "__main__":
 	parser = argparse.ArgumentParser(description="Color Transfer")
