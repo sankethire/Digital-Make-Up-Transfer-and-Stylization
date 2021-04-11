@@ -9,6 +9,7 @@ class digital_makeup:
 		self.example_image = cv.imread(example_image_path)
 
 	def process(self):
+		face_alignment.extract_face_triangles(self)
 		face_alignment.warp_example(self)
 
 if __name__ == "__main__":

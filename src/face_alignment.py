@@ -1,7 +1,9 @@
 import numpy as np
 import cv2 as cv
+import cv2
 import dlib
 from imutils import face_utils
+from imutils import opencv2matplotlib
 import matplotlib.pyplot as plt
 from matplotlib.widgets import RectangleSelector
 
@@ -205,6 +207,111 @@ def face_points(image):
 
 	return landmarks
 
+def extract_face_triangles(dm):
+	dm.subject_face_landmarks = face_points(dm.subject_image)
+	dm.example_face_landmarks = face_points(dm.example_image)
+
+	dm.subject_face_hull = cv.convexHull(dm.subject_face_landmarks)
+	dm.example_face_hull = cv.convexHull(dm.example_face_landmarks)
+
+	dm.subject_face_bounding_box = cv.boundingRect(dm.subject_face_hull)
+	dm.example_face_bounding_box = cv.boundingRect(dm.example_face_hull)
+
+	subject_subdiv = cv.Subdiv2D(dm.subject_face_bounding_box)
+	for p_x, p_y in dm.subject_face_landmarks:
+		subject_subdiv.insert((p_x, p_y))
+	dm.subject_triangles = subject_subdiv.getTriangleList()
+
+	example_subdiv = cv.Subdiv2D(dm.example_face_bounding_box)
+	for p_x, p_y in dm.example_face_landmarks:
+		example_subdiv.insert((p_x, p_y))
+	dm.example_triangles = example_subdiv.getTriangleList() #
+
 def warp_example(dm):
-	dm.subject_face_points = face_points(dm.subject_image)
-	dm.example_face_points = face_points(dm.example_image)
+	dm.example_image_warped = np.zeros_like(dm.subject_image)
+
+	def find_index_of_point(point, point_array):
+		for i, current_point in enumerate(point_array):
+			if np.all(current_point == point):
+				return i
+		return -1
+	
+	# Search index
+	for subject_triangle in dm.subject_triangles:
+		subject_point1 = subject_triangle[:2]
+		subject_point2 = subject_triangle[2:4]
+		subject_point3 = subject_triangle[4:6]
+		index1 = find_index_of_point(subject_point1, dm.subject_face_landmarks)
+		index2 = find_index_of_point(subject_point2, dm.subject_face_landmarks)
+		index3 = find_index_of_point(subject_point3, dm.subject_face_landmarks)
+
+		example_point1 = dm.example_face_landmarks[index1]
+		example_point2 = dm.example_face_landmarks[index2]
+		example_point3 = dm.example_face_landmarks[index3]
+
+		subject_cropped_triangle_coord = np.array([subject_point1, subject_point2, subject_point3], np.int32)
+		example_cropped_triangle_coord = np.array([example_point1, example_point2, example_point3], np.int32)
+
+		# Triangulate example
+		example_crop_bounding_rect = cv.boundingRect(example_cropped_triangle_coord)
+		x, y, w, h = example_crop_bounding_rect
+		cropped_example_triangle = dm.example_image[y: y+h, x:x+w]
+		# cropped_example_triangle_mask = np.zeros((h, w), np.uint8)
+
+		cropped_example_triangle_coord_relative = example_cropped_triangle_coord - np.tile(np.array([x, y]), (3, 1))
+
+		# cv.fillConvexPoly(cropped_example_triangle_mask, cropped_example_triangle_coord_relative, 255)
+
+		# Triangulate subject
+		subject_crop_bounding_rect = cv.boundingRect(subject_cropped_triangle_coord)
+		x, y, w, h = subject_crop_bounding_rect
+		# cropped_subject_triangle = dm.subject_image[y: y+h, x:x+w]
+		cropped_subject_triangle_mask = np.zeros((h, w), np.uint8)
+
+		cropped_subject_triangle_coord_relative = subject_cropped_triangle_coord - np.tile(np.array([x, y]), (3, 1))
+
+		cv.fillConvexPoly(cropped_subject_triangle_mask, cropped_subject_triangle_coord_relative, 255)
+
+		# Transform
+		M = cv.getAffineTransform(cropped_example_triangle_coord_relative.astype(np.float32), cropped_subject_triangle_coord_relative.astype(np.float32))
+		warped_example_triangle = cv.warpAffine(cropped_example_triangle, M, (w, h))
+		warped_example_triangle = cv.bitwise_and(warped_example_triangle, warped_example_triangle, mask=cropped_subject_triangle_mask)
+
+		# Reconstruct
+		# Fix to remove white lines present when adding triangles to places
+		result_face_area = dm.example_image_warped[y: y+h, x: x+w]
+		result_face_area_gray = cv.cvtColor(result_face_area, cv.COLOR_BGR2GRAY)
+		_, triangle_fix_mask = cv.threshold(result_face_area_gray, 1, 255, cv.THRESH_BINARY_INV)
+		warped_example_triangle = cv.bitwise_and(warped_example_triangle, warped_example_triangle, mask=triangle_fix_mask)
+
+		result_face_area = cv.add(result_face_area, warped_example_triangle)
+		dm.example_image_warped[y: y+h, x: x+w] = result_face_area
+		# cropped_subject_triangle_mask_3_channel = np.zeros((cropped_subject_triangle_mask.shape[0], cropped_subject_triangle_mask.shape[1], 3), np.uint8)
+		# cropped_subject_triangle_mask_3_channel[:,:,0] = np.array([cropped_subject_triangle_mask])
+		# cropped_subject_triangle_mask_3_channel[:,:,1] = np.array([cropped_subject_triangle_mask])
+		# cropped_subject_triangle_mask_3_channel[:,:,2] = np.array([cropped_subject_triangle_mask])
+		# a = cv.bitwise_and(cropped_subject_triangle_mask_3_channel, warped_example_triangle)
+		# dm.example_image_warped[y: y+h, x: x+w] = cv.bitwise_or(dm.example_image_warped[y: y+h, x: x+w], a)
+		# e = dm.example_image_warped
+		# cv.imshow("e", e)
+		# cv.waitKey(100)
+	
+	plt.subplot(1, 2, 1)
+	plt.imshow(opencv2matplotlib(dm.subject_image))
+	plt.subplot(1, 2, 2)
+	plt.imshow(opencv2matplotlib(dm.example_image_warped))
+	plt.show()
+
+def make_masks(dm):
+	# C2
+	dm.lip_mask = np.zeros((dm.subject.shape[0], dm.subject.shape[1]))
+	# C3
+	dm.eyes_mask = np.zeros((dm.subject.shape[0], dm.subject.shape[1]))
+	# C1
+	dm.skin_mask = np.zeros((dm.subject.shape[0], dm.subject.shape[1]))
+	# Other used for compositions
+	dm.nose_outline_mask = np.zeros((dm.subject.shape[0], dm.subject.shape[1]))
+	dm.entire_face_mask = np.zeros((dm.subject.shape[0], dm.subject.shape[1]))
+	dm.inner_mouth_mask = np.zeros((dm.subject.shape[0], dm.subject.shape[1]))
+	dm.outer_mouth_mask = np.zeros((dm.subject.shape[0], dm.subject.shape[1]))
+
