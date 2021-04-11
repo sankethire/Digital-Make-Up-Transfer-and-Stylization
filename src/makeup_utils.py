@@ -2,26 +2,21 @@ import cv2 as cv
 import numpy as np
 
 def layer_decomposition(dm):
-
     # decompose subject and warped image into color and ligtness layers
     dm.subject_l, dm.subject_a, dm.subject_b = cv.split(cv.cvtColor(dm.subject_image.COLOR_BGR2LAB))
     dm.example_image_warped_l, dm.example_image_warped_a, dm.example_image_warped_b = cv.split(cv.cvtColor(dm.example_image_warped.COLOR_BGR2LAB))
-
-    # why these parameters in bilateral filter
-    bilateral_filter_subject = cv.bilateralFilter(dm.subject_l,9, 75,75)
-    dm.face_structure_subject = bilateral_filter_subject
-    dm.skin_detail_subject = dm.subject_l - bilateral_filter_subject
 
     # cv.bilateralFilter(src, d, sigmaColor, sigmaSpace)
     # d − A variable of the type integer representing the diameter of the pixel neighborhood.
     # sigmaColor − A variable of the type integer representing the filter sigma in the color space.
     # sigmaSpace − A variable of the type integer representing the filter sigma in the coordinate space.
+    bilateral_filter_subject = cv.bilateralFilter(dm.subject_l,9, 75,75)
+    dm.face_structure_subject = bilateral_filter_subject
+    dm.skin_detail_subject = dm.subject_l - bilateral_filter_subject
 
     bilateral_filter_example_image_warped = cv.bilateralFilter(dm.example_image_warped_l,9, 75,75)
     dm.face_structure_example_image_warped = bilateral_filter_example_image_warped
     dm.skin_detail_example_image_warped = dm.example_image_warped - bilateral_filter_example_image_warped
-
-    
 
 def color_transfer(dm):
     # subject = dm.subject_image
@@ -35,8 +30,6 @@ def color_transfer(dm):
     dm.rc_a = cv.bitwise_and(rc_a, rc_a, mask=dm.skin_mask)    
     dm.rc_b = cv.bitwise_and(rc_b, rc_b, mask=dm.skin_mask)
     
-
-
 def skin_detail_transfer(dm):
     # setting delta_subject = 0 to conceal/hide skin details of subject image
     delta_subject = 0
@@ -47,8 +40,6 @@ def skin_detail_transfer(dm):
 
 
 def lip_makeup(dm):
-    # dm.lip_mask
-
     # luminance remapping of example image wrt subject image
     lip_luminance_subject = []
     lip_luminance_example = []
@@ -68,5 +59,3 @@ def lip_makeup(dm):
     lip_luminance_example_std = np.std(lip_luminance_subject)
 
     lip_luminance_remapping_example = (lip_luminance_example - lip_luminance_example_mean) * (lip_luminance_subject_std/lip_luminance_example_std) + lip_luminance_subject_mean
-
-    
