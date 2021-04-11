@@ -1,10 +1,11 @@
 import cv2 as cv
 import numpy as np
+from random import shuffle
 
 def layer_decomposition(dm):
     # decompose subject and warped image into color and ligtness layers
-    dm.subject_l, dm.subject_a, dm.subject_b = cv.split(cv.cvtColor(dm.subject_image.COLOR_BGR2LAB))
-    dm.example_image_warped_l, dm.example_image_warped_a, dm.example_image_warped_b = cv.split(cv.cvtColor(dm.example_image_warped.COLOR_BGR2LAB))
+    dm.subject_l, dm.subject_a, dm.subject_b = cv.split(cv.cvtColor(dm.subject_image, cv.COLOR_BGR2LAB))
+    dm.example_image_warped_l, dm.example_image_warped_a, dm.example_image_warped_b = cv.split(cv.cvtColor(dm.example_image_warped, cv.COLOR_BGR2LAB))
 
     # cv.bilateralFilter(src, d, sigmaColor, sigmaSpace)
     # d − A variable of the type integer representing the diameter of the pixel neighborhood.
@@ -43,11 +44,13 @@ def lip_makeup(dm):
     # luminance remapping of example image wrt subject image
     lip_luminance_subject = []
     lip_luminance_example = []
+    lip_points = []
     for x in range(dm.lip_mask.shape[0]):
         for y in range(dm.lip_mask.shape[1]):
             if dm.lip_mask[x,y] == 255:
                 lip_luminance_subject.append(dm.subject_l)
                 lip_luminance_example.append(dm.example_image_warped_l)
+                lip_points.append([x,y])
 
     lip_luminance_subject = np.array(lip_luminance_subject)
     lip_luminance_example = np.array(lip_luminance_example)
@@ -59,3 +62,35 @@ def lip_makeup(dm):
     lip_luminance_example_std = np.std(lip_luminance_subject)
 
     lip_luminance_remapping_example = (lip_luminance_example - lip_luminance_example_mean) * (lip_luminance_subject_std/lip_luminance_example_std) + lip_luminance_subject_mean
+
+    Gaussian = lambda x : np.e**(-0.5*float(x))
+
+    random_sample = lip_points.copy()
+    shuffle(random_sample)
+
+    iterations = len(lip_points)//10
+
+    M = cv.cvtColor(dm.subject_image, cv.COLOR_BGR2LAB)
+    example_image_warped_LAB = cv.cvtColor(dm.example_image_warped, cv.COLOR_BGR2LAB)
+
+    for p in lip_points:
+        q_tilda = 0
+        argmax_q_tilda = -np.inf
+        for i in range(iterations):
+            q = random_sample[i]
+            current_q_tilda = Gaussian(((p[0]-q[0])**2+(p[1]-q[1])**2)/2) * Gaussian((np.fabs(lip_luminance_remapping_example[q[0],q[1]] - lip_luminance_subject[p[0],p[1]])/255)**2)
+            if argmax_q_tilda < current_q_tilda:
+                argmax_q_tilda = current_q_tilda
+                q_tilda = q
+                if argmax_q_tilda >= 0.9:
+                    break
+        M[p[0],p[1]] = example_image_warped_LAB[q_tilda[0], q_tilda[1]]
+
+    dm.subject_with_lip_makeup = cv.cvtColor(dm.subject_image.copy(), cv.COLOR_BGR2LAB)
+
+    for p in lip_points:
+        dm.subject_with_lip_makeup[p[0],p[1]][1] = M[p[0],p[1]][1]
+        dm.subject_with_lip_makeup[p[0],p[1]][2] = M[p[0],p[1]][2]
+
+    dm.subject_with_lip_makeup = cv.cvtColor(dm.subject_with_lip_makeup, cv.COLOR_LAB2BGR)
+
