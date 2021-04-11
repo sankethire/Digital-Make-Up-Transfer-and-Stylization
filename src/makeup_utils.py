@@ -39,6 +39,19 @@ def skin_detail_transfer(dm):
 
     dm.skin_detail_resultant = delta_subject * dm.skin_detail_subject + delta_example * dm.skin_detail_example_image_warped
 
+def highlight_shading_transfer(dm):
+    subject_gaussian = cv.pyrDown(dm.face_structure_subject)
+    # subject_laplacian = dm.face_structure_subject - subject_gaussian
+    subject_gaussian_upscale = cv.pyrUp(subject_gaussian)
+
+    example_gaussian = cv.pyrDown(dm.face_structure_example_image_warped)
+    example_laplacian = dm.face_structure_example_image_warped - example_gaussian
+
+    special_mask = dm.eyes_mask + dm.nose_outline_mask + dm.outer_mouth_mask
+    special_mask = cv.dilate(special_mask, np.ones((5,5),np.uint8), iterations=3)
+    special_mask = dm.entire_face_mask - special_mask
+
+    dm.face_structure_resultant = np.where(special_mask, dm.face_structure_subject, example_laplacian + subject_gaussian_upscale)
 
 def lip_makeup(dm):
     # luminance remapping of example image wrt subject image
@@ -92,5 +105,4 @@ def lip_makeup(dm):
         dm.subject_with_lip_makeup[p[0],p[1]][1] = M[p[0],p[1]][1]
         dm.subject_with_lip_makeup[p[0],p[1]][2] = M[p[0],p[1]][2]
 
-    dm.subject_with_lip_makeup = cv.cvtColor(dm.subject_with_lip_makeup, cv.COLOR_LAB2BGR)
-
+    # dm.subject_with_lip_makeup = cv.cvtColor(dm.subject_with_lip_makeup, cv.COLOR_LAB2BGR)

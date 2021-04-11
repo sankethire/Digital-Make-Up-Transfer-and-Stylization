@@ -32,6 +32,8 @@ The entire process can be broken into following steps -
    1. Main py file, provides command line interface to call the entire digital makeup transfer process
 2. `src/face_alignment.py`
 3. `src/skin_detector.py`
+4. `src/makeup_util.py`
+5. `src/xdog.py`
 
 ## References
 

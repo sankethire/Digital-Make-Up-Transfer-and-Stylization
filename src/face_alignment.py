@@ -1,6 +1,5 @@
 import numpy as np
 import cv2 as cv
-import cv2
 import dlib
 from imutils import face_utils
 from imutils import opencv2matplotlib
@@ -338,7 +337,7 @@ def make_masks(dm):
 
 	nose_outline_points = np.array([[landmark for index, landmark in enumerate(dm.subject_face_landmarks) if 31 <= index <= 35 or index == 27]])
 
-	cv.polylines(dm.nose_outline_mask, nose_outline_points, True, 255, 5)
+	cv.polylines(dm.nose_outline_mask, nose_outline_points, True, 255, 2)
 
 	dm.lip_mask = dm.outer_mouth_mask - dm.inner_mouth_mask
 	dm.skin_mask = dm.entire_face_mask - dm.eyes_mask - dm.outer_mouth_mask
