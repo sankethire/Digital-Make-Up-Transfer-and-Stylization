@@ -36,7 +36,7 @@ def skin_detail_transfer(dm):
     # setting delta_example = 1 to transfer skin details in example image to resultant skin detail layer (skin_detail_resultant) image
     delta_example = 1
 
-    skin_detail_resultant = delta_subject * dm.skin_detail_subject + delta_example * dm.skin_detail_example_image_warped
+    dm.skin_detail_resultant = delta_subject * dm.skin_detail_subject + delta_example * dm.skin_detail_example_image_warped
 
 
 def lip_makeup(dm):
