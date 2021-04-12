@@ -25,7 +25,7 @@ def layer_decomposition(dm):
 def color_transfer(dm):
 	# subject = dm.subject_image
 	# warped_target = dm.example_image_warped
-	gamma = 0.8
+	gamma = dm.gamma
 
 	# dm.skin_mask
 	rc_a = (1-gamma)*dm.subject_a + gamma*dm.example_image_warped_a
@@ -36,9 +36,9 @@ def color_transfer(dm):
 	
 def skin_detail_transfer(dm):
 	# setting delta_subject = 0 to conceal/hide skin details of subject image
-	delta_subject = 0
+	delta_subject = dm.delta_subject
 	# setting delta_example = 1 to transfer skin details in example image to resultant skin detail layer (skin_detail_resultant) image
-	delta_example = 1
+	delta_example = 1 - dm.delta_subject
 
 	dm.skin_detail_resultant = delta_subject * dm.skin_detail_subject + delta_example * dm.skin_detail_example_image_warped
 

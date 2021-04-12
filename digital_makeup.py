@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 from imutils import opencv2matplotlib
 
 class digital_makeup:
-	def __init__(self, subject_image_path, example_image_path, show_intermediary=False) -> None:
+	def __init__(self, subject_image_path, example_image_path, gamma, delta_subject, show_intermediary=False) -> None:
 		self.subject_image = cv.imread(subject_image_path)
 		self.example_image = cv.imread(example_image_path)
 		self.show_intermediary = show_intermediary
@@ -25,15 +25,17 @@ class digital_makeup:
 		self.example_image = self.example_image[:x,:y,:]
 
 		self.xdog = xdog.xdog_thresholding(self.subject_image)
-		# Properties of self that will be set by other functions
-		# Face landmark points for subject image - 2d array - inner dimension is coord of point
-		# self.subject_face_landmarks = None
+
+		self.gamma = gamma
+		self.delta_subject = delta_subject
 
 	def process(self):
+		# Face shape related
 		face_alignment.extract_face_triangles(self)
 		face_alignment.warp_example(self)
 		face_alignment.make_masks(self)
 
+		# Makeup
 		makeup_utils.layer_decomposition(self)
 		makeup_utils.color_transfer(self)
 		makeup_utils.skin_detail_transfer(self)
@@ -50,13 +52,13 @@ class digital_makeup:
 
 		self.subject_makeup_mask_bgr = cv.cvtColor(self.subject_makeup_mask_lab, cv.COLOR_LAB2BGR)
 
+		self.subject_makeup = np.where(cv.merge([self.makeup_mask, self.makeup_mask, self.makeup_mask]) == 255, self.subject_makeup_mask_bgr, self.subject_image)
 		
+		# Blur boundaries
 		eroded_mask = cv.erode(self.entire_face_mask, np.ones((1, 1), np.uint8))
 		contours, _ = cv.findContours(eroded_mask, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
 		self.blurred_face_contour = np.zeros_like(eroded_mask)
 		cv.drawContours(self.blurred_face_contour, contours, -1, 255, 3)
-
-		self.subject_makeup = np.where(cv.merge([self.makeup_mask, self.makeup_mask, self.makeup_mask]) == 255, self.subject_makeup_mask_bgr, self.subject_image)
 
 		subject_makeup_blurred = cv.GaussianBlur(self.subject_image, (9, 9), 0)
 		blurred_face_contour_boolean = (self.blurred_face_contour == 255)
@@ -67,8 +69,12 @@ class digital_makeup:
 
 		self.xdog_makeup_lab = cv.cvtColor(cv.cvtColor(self.xdog, cv.COLOR_GRAY2BGR), cv.COLOR_BGR2LAB)
 		self.xdog_makeup_lab[:,:,1:] = np.where(cv.merge([self.makeup_mask, self.makeup_mask]) == 255, self.subject_makeup_mask_lab[:,:,1:], self.xdog_makeup_lab[:,:,1:])
+		self.xdog_makeup_lab[:,:,0] = np.where(self.skin_mask == 255, 0.25*self.face_structure_resultant + 0.75*self.xdog_makeup_lab[:,:,0], self.xdog_makeup_lab[:,:,0])
+		self.xdog_makeup_lab[:,:,0] = np.where(self.lip_mask == 255, 0.75*self.face_structure_resultant + 0.25*self.xdog_makeup_lab[:,:,0], self.xdog_makeup_lab[:,:,0])
+		# self.xdog_makeup_lab[:,:,1:] = self.gamma*self.xdog_makeup_lab[:,:,1:]
 		self.xdog_makeup = cv.cvtColor(self.xdog_makeup_lab, cv.COLOR_LAB2BGR)
 
+		# Showcase
 		plt.subplot(2, 3, 1)
 		plt.imshow(opencv2matplotlib(self.subject_image))
 		plt.subplot(2, 3, 2)
@@ -85,7 +91,11 @@ if __name__ == "__main__":
 	parser.add_argument("subject_image", type=str, help="Path to subject image i.e. the image to put makeup on")
 	parser.add_argument("example_image", type=str, help="Path to example image i.e. the image from which make makeup is copied")
 	parser.add_argument("-si", "--show-intermediary", action="store_true", help="Display intermediary steps")
+	parser.add_argument("-lf", "--light-foundation", action="store_true", help="Apply light foundation (normal otherwise)")
+	parser.add_argument("-lc", "--light-color", action="store_true", help="Apply light makeup color (normal otherwise)")
 	args = parser.parse_args()
 
-	self = digital_makeup(args.subject_image, args.example_image, args.show_intermediary)
+	delta_subject = 1 if args.light_foundation else 0
+	gamma = 0.5 if args.light_color else 0.8
+	self = digital_makeup(args.subject_image, args.example_image, gamma, delta_subject, args.show_intermediary)
 	self.process()
