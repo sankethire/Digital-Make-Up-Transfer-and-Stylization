@@ -13,18 +13,18 @@ def showimage(imglabel, img):
 
 def xdog_thresholding(image):
 
-    gamma = 0.99
+    gamma = 0.98
     phi = 200
     epsilon = -0.1
     k = 1.6
     sigma = 0.8
 
     input_image = image
-    # showimage("input_img", input_image)
+    showimage("input_img", input_image)
 
     # sigma_s = determines amount of smoothing (sigma spatial) -> size of neighbourhood is directly proportional to sigma s 
     # sigma_r = controls how the dissimilar colors within the neighbourhood will be averaged -> larger sigma_r larger regions of constant color
-    input_image = cv.edgePreservingFilter(input_image, flags=1, sigma_s=100, sigma_r=0.05)
+    input_image = cv.edgePreservingFilter(input_image, flags=1, sigma_s=50, sigma_r=0.05)
     # showimage("edge_preserving_input_img", input_image)
 
     input_image = cv.cvtColor(input_image, cv.COLOR_BGR2GRAY)
@@ -47,17 +47,17 @@ def xdog_thresholding(image):
             if diff_of_gaussian[i][j] < epsilon:
                 diff_of_gaussian[i][j] = 1
             else:
-                diff_of_gaussian[i][j] = 1 + math.tanh(phi*(diff_of_gaussian[i][j] - epsilon))
+                diff_of_gaussian[i][j] = 1 + math.tanh(phi*(diff_of_gaussian[i][j]))
 
 
     xdog_image = diff_of_gaussian
     # showimage("xdog", xdog_image)
 
 
-    otsu_xdog = cv.threshold(xdog_image.astype(np.uint8), 0, 255, cv.THRESH_OTSU)
-    otsu_xdog = otsu_xdog[1]
+    # otsu_xdog = cv.threshold(xdog_image.astype(np.uint8), 0, 255, cv.THRESH_OTSU)
+    # otsu_xdog = otsu_xdog[1]
 
-    # showimage("otsu", otsu_xdog)
+    # # showimage("otsu", otsu_xdog)
 
     mean_val = np.mean(xdog_image)
 
@@ -69,10 +69,10 @@ def xdog_thresholding(image):
                 xdog_image[i][j] = 1.0
     # showimage("xdog_thresholding", xdog_image)
 
-    return otsu_xdog
+    return xdog_image
 
 if __name__ == "__main__":
-    img = cv.imread("../input/xdog_subject.png")
+    img = cv.imread("../input/xdog_subject2.png")
     img = xdog_thresholding(img)
-    showimage("img", img)
+    showimage("xdog_thresholding", img)
    
