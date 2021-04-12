@@ -295,11 +295,12 @@ def warp_example(dm):
 		# cv.imshow("e", e)
 		# cv.waitKey(100)
 	
-	plt.subplot(1, 2, 1)
-	plt.imshow(opencv2matplotlib(dm.subject_image))
-	plt.subplot(1, 2, 2)
-	plt.imshow(opencv2matplotlib(dm.example_image_warped))
-	plt.show()
+	if dm.show_intermediary:
+		plt.subplot(1, 2, 1)
+		plt.imshow(opencv2matplotlib(dm.subject_image))
+		plt.subplot(1, 2, 2)
+		plt.imshow(opencv2matplotlib(dm.example_image_warped))
+		plt.show()
 
 def make_masks(dm):
 	# C2
@@ -342,12 +343,13 @@ def make_masks(dm):
 	dm.lip_mask = dm.outer_mouth_mask - dm.inner_mouth_mask
 	dm.skin_mask = dm.entire_face_mask - dm.eyes_mask - dm.outer_mouth_mask
 
-	# plt.subplot(2, 2, 1)
-	# plt.imshow(dm.lip_mask, cmap='gray', vmin=0, vmax=255)
-	# plt.subplot(2, 2, 2)
-	# plt.imshow(dm.eyes_mask, cmap='gray', vmin=0, vmax=255)
-	# plt.subplot(2, 2, 3)
-	# plt.imshow(dm.skin_mask, cmap='gray', vmin=0, vmax=255)
-	# plt.subplot(2, 2, 4)
-	# plt.imshow(dm.nose_outline_mask, cmap='gray', vmin=0, vmax=255)
-	# plt.show()
+	if dm.show_intermediary:
+		plt.subplot(2, 2, 1)
+		plt.imshow(dm.lip_mask, cmap='gray', vmin=0, vmax=255)
+		plt.subplot(2, 2, 2)
+		plt.imshow(dm.eyes_mask, cmap='gray', vmin=0, vmax=255)
+		plt.subplot(2, 2, 3)
+		plt.imshow(dm.skin_mask, cmap='gray', vmin=0, vmax=255)
+		plt.subplot(2, 2, 4)
+		plt.imshow(dm.nose_outline_mask, cmap='gray', vmin=0, vmax=255)
+		plt.show()

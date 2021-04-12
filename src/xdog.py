@@ -47,7 +47,7 @@ def xdog_thresholding(image):
             if diff_of_gaussian[i][j] < epsilon:
                 diff_of_gaussian[i][j] = 1
             else:
-                diff_of_gaussian[i][j] = 1 + math.tanh(phi*(diff_of_gaussian[i][j]))
+                diff_of_gaussian[i][j] = 1 + math.tanh(phi*(diff_of_gaussian[i][j] - epsilon))
 
 
     xdog_image = diff_of_gaussian
@@ -71,6 +71,8 @@ def xdog_thresholding(image):
 
     return otsu_xdog
 
-img = cv.imread("../input/xdog_subject.png")
-img = xdog_thresholding(img)
-showimage("img", img)
+if __name__ == "__main__":
+    img = cv.imread("../input/xdog_subject.png")
+    img = xdog_thresholding(img)
+    showimage("img", img)
+   
