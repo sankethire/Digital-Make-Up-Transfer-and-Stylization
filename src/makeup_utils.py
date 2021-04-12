@@ -58,8 +58,6 @@ def highlight_shading_transfer(dm):
 	dm.face_structure_resultant = np.where(special_mask, dm.face_structure_subject, example_laplacian + subject_gaussian_upscale)
 
 def lip_makeup(dm):
-	sys.stdout.write("Lip make up started.")
-	sys.stdout.flush()
 	dm.lip_mask_boolean = (dm.lip_mask == 255)
 
 	lip_luminance_subject_mean = np.mean(dm.subject_l, where=dm.lip_mask_boolean)
@@ -95,5 +93,5 @@ def lip_makeup(dm):
 					break
 		dm.subject_lip_makeup[p[0],p[1], 1:] = dm.example_image_warped_lab[q_tilda[0], q_tilda[1], 1:]
 
-	sys.stdout.write("\rAll lip points done.\n")
+	sys.stdout.write("\r100.00% lip points done.\n")
 	sys.stdout.flush()

@@ -50,7 +50,20 @@ class digital_makeup:
 
 		self.subject_makeup_mask_bgr = cv.cvtColor(self.subject_makeup_mask_lab, cv.COLOR_LAB2BGR)
 
+		
+		eroded_mask = cv.erode(self.entire_face_mask, np.ones((1, 1), np.uint8))
+		contours, _ = cv.findContours(eroded_mask, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
+		self.blurred_face_contour = np.zeros_like(eroded_mask)
+		cv.drawContours(self.blurred_face_contour, contours, -1, 255, 3)
+
 		self.subject_makeup = np.where(cv.merge([self.makeup_mask, self.makeup_mask, self.makeup_mask]) == 255, self.subject_makeup_mask_bgr, self.subject_image)
+
+		subject_makeup_blurred = cv.GaussianBlur(self.subject_image, (9, 9), 0)
+		blurred_face_contour_boolean = (self.blurred_face_contour == 255)
+
+		self.subject_makeup[blurred_face_contour_boolean] = subject_makeup_blurred[blurred_face_contour_boolean]
+		
+		# self.subject_makeup = cv.seamlessClone(self.subject_makeup_mask_bgr, self.subject_image, self.makeup_mask, (self.subject_image.shape[1]//2, self.subject_image.shape[0]//2), cv.MIXED_CLONE)
 
 		self.xdog_makeup_lab = cv.cvtColor(cv.cvtColor(self.xdog, cv.COLOR_GRAY2BGR), cv.COLOR_BGR2LAB)
 		self.xdog_makeup_lab[:,:,1:] = np.where(cv.merge([self.makeup_mask, self.makeup_mask]) == 255, self.subject_makeup_mask_lab[:,:,1:], self.xdog_makeup_lab[:,:,1:])
