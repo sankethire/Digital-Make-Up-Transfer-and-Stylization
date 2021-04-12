@@ -69,7 +69,7 @@ def xdog_thresholding(image):
                 xdog_image[i][j] = 1.0
     # showimage("xdog_thresholding", xdog_image)
 
-    return xdog_image.astype(np.uint8)
+    return (xdog_image*255).astype(np.uint8)
 
 if __name__ == "__main__":
     img = cv.imread("../input/xdog_subject2.png")

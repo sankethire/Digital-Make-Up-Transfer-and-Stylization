@@ -324,7 +324,6 @@ def warp_example(dm):
 		# cv.waitKey(100)
 	
 	if dm.show_intermediary:
-		plt.axis('off')
 		plt.subplot(1, 2, 1)
 		plt.imshow(opencv2matplotlib(dm.subject_image))
 		plt.subplot(1, 2, 2)
@@ -373,7 +372,6 @@ def make_masks(dm):
 	dm.skin_mask = dm.entire_face_mask - dm.eyes_mask - dm.outer_mouth_mask
 
 	if dm.show_intermediary:
-		plt.axis('off')
 		plt.subplot(2, 2, 1)
 		plt.imshow(dm.lip_mask, cmap='gray', vmin=0, vmax=255)
 		plt.subplot(2, 2, 2)

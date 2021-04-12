@@ -11,7 +11,7 @@
 			"program": "digital_makeup.py",
 			"console": "integratedTerminal",
 			// "args": ["-si", "input/subject2.png", "input/example1.png"]
-			"args": ["input/subject2.png", "input/example1.png"]
+			"args": ["input/subject1.png", "input/example1.png"]
 		}
 	]
 }
