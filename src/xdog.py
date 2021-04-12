@@ -20,7 +20,7 @@ def xdog_thresholding(image):
     sigma = 0.8
 
     input_image = image
-    showimage("input_img", input_image)
+    # showimage("input_img", input_image)
 
     # sigma_s = determines amount of smoothing (sigma spatial) -> size of neighbourhood is directly proportional to sigma s 
     # sigma_r = controls how the dissimilar colors within the neighbourhood will be averaged -> larger sigma_r larger regions of constant color
@@ -69,7 +69,7 @@ def xdog_thresholding(image):
                 xdog_image[i][j] = 1.0
     # showimage("xdog_thresholding", xdog_image)
 
-    return xdog_image
+    return xdog_image.astype(np.uint8)
 
 if __name__ == "__main__":
     img = cv.imread("../input/xdog_subject2.png")

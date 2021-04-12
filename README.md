@@ -2,10 +2,13 @@
 
 Implementation of [Digital face makeup by example](https://ieeexplore.ieee.org/document/5206833) with the following modifications -
 
-1. Face key point detector
+1. Face key point detector is `dlib`'s implementation with 69 points. Forehead points are manually adjustable and automatically added first using 3rd party skin detector implementation
 2. Bilateral filtering is used instead of weighted-least-square (WLS)
+3. XDoG of subject along with makeup is displayed
 
 ## How to run?
+
+Install required dependencies using `pip install -r requirements.txt`
 
 Place `shape_predictor_68_face_landmarks.dat` in src directory in not already there. You can download it from [dlib official site](http://dlib.net/files/)
 

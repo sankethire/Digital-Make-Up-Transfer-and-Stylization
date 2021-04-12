@@ -8,6 +8,8 @@ from matplotlib.widgets import RectangleSelector
 
 from . import skin_detector
 
+import cv2
+
 hair_luminosity_thresh = 20
 forehead_search_headstart = 20
 
@@ -155,6 +157,8 @@ class interactive_forehead_selector:
 			plt.close()
 		elif event.button == 1:
 			x, y = event.xdata, event.ydata
+			if x is None or y is None:
+				return
 			x = 0 if x < 0 else self.luminosity_image.shape[0] if x > self.luminosity_image.shape[0] else x
 			y = 0 if y < 0 else self.luminosity_image.shape[1] if y > self.luminosity_image.shape[1] else y
 			if self.state == 1:
@@ -206,9 +210,33 @@ def face_points(image):
 
 	return landmarks
 
+# dlib can predict face landmark points out side the image too, fix for this
+def landmark_range_fix(landmarks, img_shape):
+	for i, (x, y) in enumerate(landmarks):
+		changed = False
+
+		if x > img_shape[1]-1:
+			x = img_shape[1]-1
+			changed = True
+		elif x < 0:
+			x = 0
+			changed = True
+
+		if y > img_shape[0]-1:
+			y = img_shape[0]-1
+			changed = True
+		elif y < 0:
+			y = 0
+			changed = True
+		
+		if changed:
+			landmarks[i] = np.array([x, y])
+
 def extract_face_triangles(dm):
 	dm.subject_face_landmarks = face_points(dm.subject_image)
+	landmark_range_fix(dm.subject_face_landmarks, dm.subject_image.shape)
 	dm.example_face_landmarks = face_points(dm.example_image)
+	landmark_range_fix(dm.example_face_landmarks, dm.example_image.shape)
 
 	subject_face_hull = cv.convexHull(dm.subject_face_landmarks)
 	example_face_hull = cv.convexHull(dm.example_face_landmarks)
@@ -224,7 +252,7 @@ def extract_face_triangles(dm):
 	example_subdiv = cv.Subdiv2D(example_face_bounding_box)
 	for p_x, p_y in dm.example_face_landmarks:
 		example_subdiv.insert((p_x, p_y))
-	dm.example_triangles = example_subdiv.getTriangleList() #
+	dm.example_triangles = example_subdiv.getTriangleList() # x1 y1 x2 y2 x3 y3
 
 def warp_example(dm):
 	dm.example_image_warped = np.zeros_like(dm.subject_image)
@@ -296,6 +324,7 @@ def warp_example(dm):
 		# cv.waitKey(100)
 	
 	if dm.show_intermediary:
+		plt.axis('off')
 		plt.subplot(1, 2, 1)
 		plt.imshow(opencv2matplotlib(dm.subject_image))
 		plt.subplot(1, 2, 2)
@@ -344,6 +373,7 @@ def make_masks(dm):
 	dm.skin_mask = dm.entire_face_mask - dm.eyes_mask - dm.outer_mouth_mask
 
 	if dm.show_intermediary:
+		plt.axis('off')
 		plt.subplot(2, 2, 1)
 		plt.imshow(dm.lip_mask, cmap='gray', vmin=0, vmax=255)
 		plt.subplot(2, 2, 2)

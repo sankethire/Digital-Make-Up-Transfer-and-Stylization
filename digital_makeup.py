@@ -50,16 +50,17 @@ class digital_makeup:
 
 		self.subject_makeup_mask_bgr = cv.cvtColor(self.subject_makeup_mask_lab, cv.COLOR_LAB2BGR)
 
-		self.subject_makeup = np.where(cv.merge([self.makeup_mask, self.makeup_mask, self.makeup_mask]) == 255, self.subject_makeup_mask_lab, self.subject_image)
+		self.subject_makeup = np.where(cv.merge([self.makeup_mask, self.makeup_mask, self.makeup_mask]) == 255, self.subject_makeup_mask_bgr, self.subject_image)
 
-		plt.subplot(2, 3, 2)
-		plt.imshow(opencv2matplotlib(self.example_image))
-		plt.subplot(2, 3, 4)
+		plt.axis('off')
+		plt.subplot(2, 3, 1)
 		plt.imshow(opencv2matplotlib(self.subject_image))
-		plt.subplot(2, 3, 5)
+		plt.subplot(2, 3, 2)
 		plt.imshow(opencv2matplotlib(self.xdog))
-		plt.subplot(2, 3, 6)
-		plt.imshow(opencv2matplotlib(self.subject_makeup_mask_bgr))
+		plt.subplot(2, 3, 3)
+		plt.imshow(opencv2matplotlib(self.subject_makeup))
+		plt.subplot(2, 3, 5)
+		plt.imshow(opencv2matplotlib(self.example_image))
 		plt.show()
 
 

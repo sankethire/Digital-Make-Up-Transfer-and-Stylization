@@ -1,6 +1,7 @@
 import cv2 as cv
 import numpy as np
 from random import shuffle
+import sys
 
 def layer_decomposition(dm):
 	# decompose subject and warped image into color and ligtness layers
@@ -57,6 +58,8 @@ def highlight_shading_transfer(dm):
 	dm.face_structure_resultant = np.where(special_mask, dm.face_structure_subject, example_laplacian + subject_gaussian_upscale)
 
 def lip_makeup(dm):
+	sys.stdout.write("Lip make up started.")
+	sys.stdout.flush()
 	dm.lip_mask_boolean = (dm.lip_mask == 255)
 
 	lip_luminance_subject_mean = np.mean(dm.subject_l, where=dm.lip_mask_boolean)
@@ -73,14 +76,13 @@ def lip_makeup(dm):
 	random_sample = lip_indexes.copy()
 	shuffle(random_sample)
 
-	iterations = len(random_sample)//10
+	iterations = len(random_sample)//50
 
 	dm.subject_lip_makeup = dm.subject_lab.copy()
-	# M = np.array([dm.subject_l, dm.subject_a, dm.subject_b])
-	# example_image_warped_LAB = cv.cvtColor(dm.example_image_warped, cv.COLOR_BGR2LAB)
 
 	for count, p in enumerate(lip_indexes):
-		print(100.0*count/len(lip_indexes))
+		sys.stdout.write("\r%.2f%% lip points done." % (100.0*count/len(lip_indexes)))
+		sys.stdout.flush()
 		q_tilda = 0
 		argmax_q_tilda = -np.inf
 		for i in range(iterations):
@@ -93,10 +95,5 @@ def lip_makeup(dm):
 					break
 		dm.subject_lip_makeup[p[0],p[1], 1:] = dm.example_image_warped_lab[q_tilda[0], q_tilda[1], 1:]
 
-	# dm.subject_with_lip_makeup = cv.cvtColor(dm.subject_image.copy(), cv.COLOR_BGR2LAB)
-
-	# for p in lip_points:
-	# 	dm.subject_with_lip_makeup[p[0],p[1]][1] = M[p[0],p[1]][1]
-	# 	dm.subject_with_lip_makeup[p[0],p[1]][2] = M[p[0],p[1]][2]
-
-	# dm.subject_with_lip_makeup = cv.cvtColor(dm.subject_with_lip_makeup, cv.COLOR_LAB2BGR)
+	sys.stdout.write("\rAll lip points done.\n")
+	sys.stdout.flush()
