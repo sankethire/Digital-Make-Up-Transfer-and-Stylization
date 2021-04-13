@@ -8,9 +8,19 @@ Implementation of [Digital face makeup by example](https://ieeexplore.ieee.org/d
 
 ## How to run?
 
-Install required dependencies using `pip install -r requirements.txt`
+1. Install required dependencies using `pip install -r requirements.txt`
 
-Place `shape_predictor_68_face_landmarks.dat` in src directory in not already there. You can download it from [dlib official site](http://dlib.net/files/)
+2. Place `shape_predictor_68_face_landmarks.dat` in src directory in not already there. You can download it from [dlib official site](http://dlib.net/files/)
+
+3. The program takes two inputs (i.e. Subject Image nd Example Image) and can be run as - `python digital makeup.py -lc -lf input/subject1.png input/example1.png`
+
+4. The program has option for 3 flags:
+   -  `-si` or show interactive to display output of intermediary steps like face alignment and various face masks extraction
+   -  The other two flags `-lc` and `-lf` which imply:
+      - `-lf` or light foundation. Skin details aren’t hidden when foundation is light. Weight of subjects’ for transferring skin detail (δI ) is 1 instead of 0
+      - `-lc` or light makeup color. Weight while doing color transfer are more in favor of subject image, γ = 0.5 instead of γ = 0.8 or weight of subject color 0.5 instead of 0.2
+
+
 
 ## Design
 
@@ -22,6 +32,8 @@ The entire process can be broken into following steps -
 - Color Transfer
 - Highlight and Shading Transfer
 - Lip Makeup
+
+**(To understand the complete approach of the Design go through - [Report](https://github.com/sankethire/Digital-Make-Up-Transfer-and-Stylization/blob/main/Report.pdf))**
 
 
 ## File Structure
