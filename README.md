@@ -12,7 +12,8 @@ Implementation of [Digital face makeup by example](https://ieeexplore.ieee.org/d
 
 2. Place `shape_predictor_68_face_landmarks.dat` in src directory in not already there. You can download it from [dlib official site](http://dlib.net/files/)
 
-3. The program takes two inputs (i.e. Subject Image nd Example Image) and can be run as - `python digital makeup.py -lc -lf input/subject1.png input/example1.png`
+3. The program takes two inputs (i.e. Subject Image nd Example Image) and can be run as - 
+`python digital_makeup.py -lc -lf input/subject1.png input/example1.png`
 
 4. The program has option for 3 flags:
    -  `-si` or show interactive to display output of intermediary steps like face alignment and various face masks extraction
